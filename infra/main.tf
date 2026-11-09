@@ -54,15 +54,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
   rule {
     id     = "expire-uploads"
     status = "Enabled"
-    filter { prefix = "in/" }
+    filter {}
     expiration { days = 1 }
     abort_incomplete_multipart_upload { days_after_initiation = 1 }
-  }
-  rule {
-    id     = "expire-custom-watermarks"
-    status = "Enabled"
-    filter { prefix = "watermarks/" }
-    expiration { days = 1 }
   }
 }
 
