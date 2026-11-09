@@ -1,0 +1,19 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+@theme {
+	--font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+	body {
+		@apply bg-zinc-50 text-zinc-900 antialiased;
+	}
+}
+
+/* Checkerboard behind watermark thumbnails so transparency is visible. */
+@utility bg-checkerboard {
+	background-color: var(--color-white);
+	background-image: conic-gradient(var(--color-zinc-200) 25%, transparent 0 50%, var(--color-zinc-200) 0 75%, transparent 0);
+	background-size: 14px 14px;
+}

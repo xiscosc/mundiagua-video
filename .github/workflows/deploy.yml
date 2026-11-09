@@ -1,0 +1,41 @@
+name: Deploy AWS
+
+# The web app is deployed by Cloudflare's GitHub integration; this workflow handles AWS only.
+on:
+  push:
+    branches: [main]
+
+# Never run two applies against the same state at once.
+concurrency: deploy
+
+jobs:
+  deploy:
+    # arm64 runner: the container image runs on ARM Fargate, so it builds natively here.
+    runs-on: ubuntu-24.04-arm
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      TF_VAR_region: ${{ vars.AWS_REGION }}
+      TF_VAR_web_origin: ${{ vars.WEB_ORIGIN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.0
+          terraform_wrapper: false
+
+      - name: Terraform apply
+        working-directory: infra
+        run: |
+          terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" -backend-config="region=$AWS_REGION"
+          terraform apply -input=false -auto-approve
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push container image
+        run: |
+          REPO=$(terraform -chdir=infra output -raw ecr_repo)
+          docker build -f container/Dockerfile -t "$REPO:latest" .
+          docker push "$REPO:latest"

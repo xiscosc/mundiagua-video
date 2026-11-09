@@ -1,0 +1,21 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "video-converter",
+	"compatibility_date": "2026-11-01",
+	"compatibility_flags": ["nodejs_als", "nodejs_compat"],
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".svelte-kit/cloudflare"
+	},
+	"workers_dev": true,
+	"preview_urls": false,
+	"vars": {
+		"AWS_REGION": "eu-west-1",
+		"UPLOAD_BUCKET": "video-converter-uploads",
+		"OUTPUT_BUCKET": "video-converter-outputs",
+		"TABLE": "video-converter-tasks"
+	}
+	// Secrets AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set in Cloudflare (see README).
+	// For `npm run dev`, put them in .dev.vars (git-ignored).
+}
