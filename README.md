@@ -32,7 +32,7 @@ Task status: `created` → `processing` → `done` | `failed`.
 |---|---|
 | Speeds, maximum file size | `web/src/lib/tasks.ts` |
 | Watermarks (1280×720 PNG, no spaces in the name) | `web/src/lib/watermarks/` |
-| AWS region and resource names | `infra/main.tf` variables, `web/wrangler.jsonc` vars |
+| AWS region and resource names | `infra/main.tf` variables, and the Worker variables in Cloudflare |
 
 Watermarks are included in both the web app and the container image. A push to `main` redeploys both.
 
@@ -71,7 +71,7 @@ Watermarks are included in both the web app and the container image. A push to `
 
 4. Push to `main` to create the AWS resources.
 
-5. Create an IAM user for the Worker with the policy below (resource names are the defaults from `infra/main.tf`), create an access key for it and add it to the Worker as the secrets `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`:
+5. Create an IAM user for the Worker with the policy below (resource names are the defaults from `infra/main.tf`), create an access key for it and configure the Worker in Cloudflare:
 
    ```json
    {
@@ -98,7 +98,7 @@ Watermarks are included in both the web app and the container image. A push to `
 
 ## Local development
 
-Create `web/.dev.vars` with `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, then:
+Create `web/.dev.vars` with the same variables and secrets as the Worker, then:
 
 ```bash
 cd web && npm run dev

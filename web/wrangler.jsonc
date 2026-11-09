@@ -10,12 +10,7 @@
 	},
 	"workers_dev": true,
 	"preview_urls": false,
-	"vars": {
-		"AWS_REGION": "eu-west-1",
-		"UPLOAD_BUCKET": "video-converter-uploads",
-		"OUTPUT_BUCKET": "video-converter-outputs",
-		"TABLE": "video-converter-tasks"
-	}
-	// Secrets AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set in Cloudflare (see README).
-	// For `npm run dev`, put them in .dev.vars (git-ignored).
+	// AWS settings and keys are configured on the Worker in Cloudflare (see README);
+	// keep_vars stops deploys from removing them. For `npm run dev`, put them in .dev.vars.
+	"keep_vars": true
 }
