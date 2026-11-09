@@ -7,7 +7,7 @@ import {
 	CompleteMultipartUploadCommand,
 	UploadPartCommand
 } from '@aws-sdk/client-s3';
-import { DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { DeleteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { aws, inputKey } from '#lib/server/aws.ts';
 import type { RequestHandler } from './$types';
 
@@ -33,6 +33,18 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		case 'complete':
 			// Completing the upload makes S3 emit "Object Created", which starts the Fargate job.
+			// Mark it processing now: the container takes about a minute to start and sets it again.
+			// If the browser then fails to complete, it cancels and the task is deleted.
+			await db.send(
+				new UpdateCommand({
+					TableName: env.TABLE,
+					Key: { id: req.id },
+					ConditionExpression: 'attribute_exists(id)',
+					UpdateExpression: 'SET #status = :status, updatedAt = :now',
+					ExpressionAttributeNames: { '#status': 'status' },
+					ExpressionAttributeValues: { ':status': 'processing', ':now': Date.now() }
+				})
+			);
 			return json({ url: await sign(new CompleteMultipartUploadCommand(target)) });
 
 		case 'cancel':

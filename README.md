@@ -89,7 +89,7 @@ Watermarks are included in both the web app and the container image. After chang
        },
        {
          "Effect": "Allow",
-         "Action": ["dynamodb:Scan", "dynamodb:PutItem", "dynamodb:DeleteItem"],
+         "Action": ["dynamodb:Scan", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem"],
          "Resource": "arn:aws:dynamodb:<region>:<account id>:table/video-converter-tasks"
        }
      ]
