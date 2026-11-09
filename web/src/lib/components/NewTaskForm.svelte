@@ -2,7 +2,7 @@
 	import { enhance, type SubmitFunction } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import { Ban, Check, CircleAlert, CircleCheck, CloudUpload, Film, Gauge, ImagePlus, X } from '@lucide/svelte';
-	import { DEFAULT_SPEED, GB, MAX_SIZE, SPEEDS, type CreatedUpload, type Watermark, CUSTOM_WATERMARK, MAX_WATERMARK_SIZE, NO_WATERMARK, watermarkLabel } from '#lib/tasks.ts';
+	import { DEFAULT_SPEED, GB, MAX_SIZE, SPEEDS, type CreatedUpload, type Watermark, CUSTOM_WATERMARK, MAX_WATERMARK_SIZE, NO_WATERMARK, VIDEO_EXTENSIONS, isVideo, watermarkLabel } from '#lib/tasks.ts';
 	import { formatBytes, formatDuration } from '#lib/format.ts';
 	import { uploadVideo } from '#lib/upload.ts';
 
@@ -46,8 +46,8 @@
 		error = '';
 		notice = '';
 		if (!f) return;
-		if (f.type !== 'video/mp4' && !f.name.toLowerCase().endsWith('.mp4')) {
-			error = 'Solo se admiten vídeos MP4.';
+		if (!isVideo(f)) {
+			error = 'Ese archivo no es un vídeo.';
 			return;
 		}
 		if (f.size > MAX_SIZE) {
@@ -254,7 +254,7 @@
 						<span class="text-sm">
 							<span class="font-semibold text-indigo-600">Elige un vídeo</span> o arrástralo aquí
 						</span>
-						<span class="text-xs text-zinc-500">MP4, hasta {MAX_SIZE / GB} GB</span>
+						<span class="text-xs text-zinc-500">MP4, MOV, MKV, AVI, WebM…, hasta {MAX_SIZE / GB} GB</span>
 					</label>
 				{/if}
 				<!-- No name: the file goes straight to S3, never through the form. -->
@@ -262,7 +262,7 @@
 					bind:this={fileInput}
 					id="video"
 					type="file"
-					accept="video/mp4,.mp4"
+					accept={['video/*', ...VIDEO_EXTENSIONS.map((e) => `.${e}`)].join(',')}
 					class="sr-only"
 					onchange={(e) => pick(e.currentTarget.files?.[0])}
 				/>

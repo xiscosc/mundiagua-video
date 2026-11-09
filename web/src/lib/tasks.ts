@@ -17,6 +17,10 @@ export const NO_WATERMARK = 'none';
 /** Stored when the user uploads their own PNG (to watermarks/<task id>.png in the uploads bucket). */
 export const CUSTOM_WATERMARK = 'custom';
 export const MAX_WATERMARK_SIZE = 10 * 1024 ** 2;
+/** Input containers ffmpeg reads. Checked by extension too, since browsers leave the type empty for some (e.g. MKV). */
+export const VIDEO_EXTENSIONS = ['mp4', 'm4v', 'mov', 'mkv', 'webm', 'avi', 'wmv', 'flv', 'mpg', 'mpeg', 'ts', 'mts', 'm2ts', '3gp', 'ogv'];
+export const isVideo = (f: File) =>
+	f.type.startsWith('video/') || VIDEO_EXTENSIONS.includes(f.name.split('.').pop()?.toLowerCase() ?? '');
 
 /** "FLUIDRA_GRE.png" -> "FLUIDRA GRE". */
 export const watermarkLabel = (name: string) =>

@@ -4,7 +4,8 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env as workerEnv } from 'cloudflare:workers';
 
-export const inputKey = (taskId: string) => `in/${taskId}.mp4`;
+// No extension: the upload can be any container, ffmpeg detects it from the content.
+export const inputKey = (taskId: string) => `in/${taskId}`;
 // Outside in/, so uploading it doesn't start a processing job.
 export const customWatermarkKey = (taskId: string) => `watermarks/${taskId}.png`;
 

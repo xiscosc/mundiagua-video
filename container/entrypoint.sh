@@ -1,5 +1,5 @@
 #!/bin/sh
-# One Fargate task per upload. KEY=in/<task id>.mp4 comes from EventBridge;
+# One Fargate task per upload. KEY=in/<task id> comes from EventBridge (in/<task id>.mp4 for older uploads);
 # UPLOAD_BUCKET, OUTPUT_BUCKET and TABLE come from the task definition.
 set -euf # -f: no globbing, so the unquoted $audio and $wm_input below stay as written
 : "${UPLOAD_BUCKET:?}" "${OUTPUT_BUCKET:?}" "${TABLE:?}" "${KEY:?}"
@@ -46,10 +46,11 @@ fi
 
 status processing
 echo "task $id: ${speed}x with $wm, audio: $audio"
-aws s3 cp --only-show-errors "s3://$UPLOAD_BUCKET/$KEY" in.mp4
+# Any container ffmpeg can read (MP4, MOV, MKV, AVI...); no extension, ffmpeg detects the format from the content.
+aws s3 cp --only-show-errors "s3://$UPLOAD_BUCKET/$KEY" in
 
 # pools=$(nproc): x265 can't detect CPUs via libnuma inside containers and silently drops its thread pool.
-ffmpeg -nostdin -hide_banner -loglevel warning -y -i in.mp4 $wm_input -filter_complex "$graph" \
+ffmpeg -nostdin -hide_banner -loglevel warning -y -i in $wm_input -filter_complex "$graph" \
   -map "[out]" $audio -c:v libx265 -x265-params "pools=$(nproc):log-level=error" -preset medium -crf 28 -tag:v hvc1 -pix_fmt yuv420p -movflags +faststart out.mp4
 
 aws s3 cp --only-show-errors out.mp4 "s3://$OUTPUT_BUCKET/$id.mp4"
