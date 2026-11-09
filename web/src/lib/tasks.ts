@@ -12,6 +12,19 @@ export const PART_SIZE = 100 * 1024 ** 2;
 export const RETENTION_DAYS = 7;
 /** A PNG directly in watermarks/: no slashes, no whitespace. Same rule as container/entrypoint.sh. */
 export const WATERMARK_NAME = /^[^/\s]+\.png$/;
+/** Stored as the task's watermark when the user picks "Sin marca de agua". */
+export const NO_WATERMARK = 'none';
+/** Stored when the user uploads their own PNG (to watermarks/<task id>.png in the uploads bucket). */
+export const CUSTOM_WATERMARK = 'custom';
+export const MAX_WATERMARK_SIZE = 10 * 1024 ** 2;
+
+/** "FLUIDRA_GRE.png" -> "FLUIDRA GRE". */
+export const watermarkLabel = (name: string) =>
+	name === NO_WATERMARK
+		? 'Sin marca de agua'
+		: name === CUSTOM_WATERMARK
+			? 'Personalizada'
+			: name.replace(/\.png$/, '').replaceAll('_', ' ');
 
 export type TaskStatus = 'created' | 'queued' | 'processing' | 'done' | 'failed';
 
@@ -50,6 +63,8 @@ export interface CreatedUpload {
 	id: string;
 	/** Signed S3 request that starts the multipart upload. */
 	startUrl: string;
+	/** Signed PUT for the custom watermark PNG, when the task uses one. */
+	watermarkUrl?: string;
 	partSize: number;
 }
 
@@ -63,6 +78,11 @@ export const newTaskSchema = z.object({
 	size: z.coerce.number().int().positive().max(MAX_SIZE, `El vídeo no puede superar ${MAX_SIZE / GB} GB`),
 	duration: z.coerce.number().positive().optional(),
 	speed: z.coerce.number().refine((s) => (SPEEDS as readonly number[]).includes(s), 'Elige una aceleración'),
-	watermark: z.string().regex(WATERMARK_NAME, 'Elige una marca de agua'),
+	watermark: z
+		.string()
+		.refine(
+			(w) => w === NO_WATERMARK || w === CUSTOM_WATERMARK || WATERMARK_NAME.test(w),
+			'Elige una marca de agua'
+		),
 	removeAudio: z.boolean()
 });

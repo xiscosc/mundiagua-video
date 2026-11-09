@@ -5,6 +5,8 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env as workerEnv } from 'cloudflare:workers';
 
 export const inputKey = (taskId: string) => `in/${taskId}.mp4`;
+// Outside in/, so uploading it doesn't start a processing job.
+export const customWatermarkKey = (taskId: string) => `watermarks/${taskId}.png`;
 
 interface AwsEnv {
 	AWS_ACCESS_KEY_ID?: string;

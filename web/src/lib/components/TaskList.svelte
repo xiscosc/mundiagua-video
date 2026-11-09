@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import { CircleCheck, CircleX, Clock, Download, Inbox, LoaderCircle, CloudUpload, Play, RefreshCw, Trash2, X } from '@lucide/svelte';
-	import type { Task } from '#lib/tasks.ts';
+	import { watermarkLabel, type Task } from '#lib/tasks.ts';
 	import { formatBytes, formatDuration, formatDate } from '#lib/format.ts';
 	import type { ActiveUpload } from './NewTaskForm.svelte';
 
@@ -70,7 +70,7 @@
 							</span>
 						</div>
 						<p class="mt-1 truncate text-sm text-zinc-500">
-							{task.filename} · {formatBytes(task.size)}{task.duration ? ` · ${formatDuration(task.duration)}` : ''} · {task.speed}× · {task.watermark.replace(/\.png$/, '').replaceAll('_', ' ')}{task.removeAudio === false ? ' · con audio' : ''}
+							{task.filename} · {formatBytes(task.size)}{task.duration ? ` · ${formatDuration(task.duration)}` : ''} · {task.speed}× · {watermarkLabel(task.watermark)}{task.removeAudio === false ? ' · con audio' : ''}
 						</p>
 						<p class="mt-0.5 text-xs text-zinc-400">
 							{#if uploading && upload}

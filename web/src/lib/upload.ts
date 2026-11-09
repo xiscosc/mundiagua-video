@@ -47,9 +47,10 @@ function putPart(url: string, blob: Blob, signal: AbortSignal, onProgress: (load
  */
 export async function uploadVideo(
 	file: File,
-	{ id, startUrl, partSize }: CreatedUpload,
+	{ id, startUrl, watermarkUrl, partSize }: CreatedUpload,
 	signal: AbortSignal,
-	onProgress: (loaded: number) => void
+	onProgress: (loaded: number) => void,
+	customWatermark?: File
 ) {
 	const count = Math.ceil(file.size / partSize);
 	const etags: string[] = [];
@@ -84,6 +85,10 @@ export async function uploadVideo(
 	let next = 0;
 
 	try {
+		// The custom watermark goes first: completing the video upload starts processing, which needs it.
+		if (watermarkUrl && customWatermark) {
+			await s3(watermarkUrl, { method: 'PUT', body: customWatermark, signal: stop.signal });
+		}
 		const started = await s3(startUrl, { method: 'POST', signal: stop.signal });
 		uploadId = new DOMParser().parseFromString(started, 'application/xml').querySelector('UploadId')
 			?.textContent ?? undefined;

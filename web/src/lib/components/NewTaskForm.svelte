@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance, type SubmitFunction } from '$app/forms';
 	import { invalidate } from '$app/navigation';
-	import { Check, CircleAlert, CircleCheck, CloudUpload, Film, Gauge, X } from '@lucide/svelte';
-	import { DEFAULT_SPEED, GB, MAX_SIZE, SPEEDS, type CreatedUpload, type Watermark } from '#lib/tasks.ts';
+	import { Ban, Check, CircleAlert, CircleCheck, CloudUpload, Film, Gauge, ImagePlus, X } from '@lucide/svelte';
+	import { DEFAULT_SPEED, GB, MAX_SIZE, SPEEDS, type CreatedUpload, type Watermark, CUSTOM_WATERMARK, MAX_WATERMARK_SIZE, NO_WATERMARK, watermarkLabel } from '#lib/tasks.ts';
 	import { formatBytes, formatDuration } from '#lib/format.ts';
 	import { uploadVideo } from '#lib/upload.ts';
 
@@ -26,7 +26,11 @@
 	let label = $state('');
 	let chosenWatermark = $state('');
 	const watermark = $derived(chosenWatermark || watermarks[0]?.name || '');
-	const watermarkUrl = $derived(watermarks.find((w) => w.name === watermark)?.url);
+	let customWatermark = $state<File | null>(null);
+	let customWatermarkUrl = $state('');
+	const watermarkUrl = $derived(
+		watermark === CUSTOM_WATERMARK ? customWatermarkUrl : watermarks.find((w) => w.name === watermark)?.url
+	);
 	let speed = $state<number>(DEFAULT_SPEED);
 	let dragging = $state(false);
 	let creating = $state(false);
@@ -81,6 +85,23 @@
 		video.src = url;
 	}
 
+	function pickWatermark(f: File | undefined) {
+		error = '';
+		if (!f) return;
+		if (f.type !== 'image/png') {
+			error = 'La marca de agua tiene que ser un PNG.';
+			return;
+		}
+		if (f.size > MAX_WATERMARK_SIZE) {
+			error = `La marca de agua ocupa ${formatBytes(f.size)}. El máximo es ${formatBytes(MAX_WATERMARK_SIZE)}.`;
+			return;
+		}
+		if (customWatermarkUrl) URL.revokeObjectURL(customWatermarkUrl);
+		customWatermark = f;
+		customWatermarkUrl = URL.createObjectURL(f);
+		chosenWatermark = CUSTOM_WATERMARK;
+	}
+
 	function clearFile() {
 		file = null;
 		duration = undefined;
@@ -105,8 +126,14 @@
 			error = 'Añade el ID interno del vídeo.';
 			return cancel();
 		}
+		if (watermark === CUSTOM_WATERMARK && !customWatermark) {
+			error = 'Elige el PNG de la marca de agua.';
+			return cancel();
+		}
 		const video = file;
 		const taskLabel = label.trim();
+		const ownWatermark = watermark === CUSTOM_WATERMARK ? (customWatermark ?? undefined) : undefined;
+		formData.set('watermark', watermark);
 		formData.set('filename', video.name);
 		formData.set('size', String(video.size));
 		if (duration) formData.set('duration', String(duration));
@@ -127,9 +154,15 @@
 			upload = { id: created.id, label: taskLabel, loaded: 0, total: video.size, startedAt: Date.now() };
 			await invalidate('app:tasks');
 			try {
-				await uploadVideo(video, created, controller.signal, (loaded) => {
-					if (upload) upload.loaded = loaded;
-				});
+				await uploadVideo(
+					video,
+					created,
+					controller.signal,
+					(loaded) => {
+						if (upload) upload.loaded = loaded;
+					},
+					ownWatermark
+				);
 				notice = `“${taskLabel}” se ha subido. Ya puedes cerrar esta página.`;
 				clearFile();
 				label = '';
@@ -254,13 +287,8 @@
 			<!-- Watermark -->
 			<fieldset>
 				<legend class="mb-2 text-sm font-medium">Marca de agua</legend>
-				{#if watermarks.length === 0}
-					<p class="rounded-lg border border-dashed border-zinc-300 px-4 py-6 text-center text-sm text-zinc-500">
-						No hay marcas de agua disponibles.
-					</p>
-				{:else}
-					<div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
-						{#each watermarks as wm (wm.name)}
+				<div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
+						{#each [{ name: NO_WATERMARK, url: '' }, ...watermarks] as wm (wm.name)}
 							<label
 								class={[
 									'group relative cursor-pointer overflow-hidden rounded-xl border-2 transition has-focus-visible:ring-3 has-focus-visible:ring-indigo-500/30',
@@ -278,10 +306,14 @@
 									class="sr-only"
 								/>
 								<div class="bg-checkerboard aspect-video">
-									<img src={wm.url} alt="" class="size-full object-contain" loading="lazy" />
+									{#if wm.url}
+										<img src={wm.url} alt="" class="size-full object-contain" loading="lazy" />
+									{:else}
+										<Ban class="m-auto h-full size-5 text-zinc-400" aria-hidden="true" />
+									{/if}
 								</div>
 								<div class="border-t border-zinc-100 px-2 py-1">
-									<span class="block text-[11px] leading-tight font-medium">{wm.name.replace(/\.png$/, '').replaceAll('_', ' ')}</span>
+									<span class="block text-[11px] leading-tight font-medium">{watermarkLabel(wm.name)}</span>
 								</div>
 								{#if watermark === wm.name}
 									<span class="absolute top-1 right-1 grid size-4 place-items-center rounded-full bg-indigo-600 text-white shadow">
@@ -290,7 +322,39 @@
 								{/if}
 							</label>
 						{/each}
-					</div>
+						<label
+							class={[
+								'relative cursor-pointer overflow-hidden rounded-xl border-2 transition has-focus-visible:ring-3 has-focus-visible:ring-indigo-500/30',
+								watermark === CUSTOM_WATERMARK ? 'border-indigo-500' : 'border-dashed border-zinc-300 hover:border-zinc-400'
+							]}
+						>
+							<input
+								type="file"
+								accept="image/png"
+								class="sr-only"
+								onchange={(e) => pickWatermark(e.currentTarget.files?.[0])}
+							/>
+							<div class="bg-checkerboard grid aspect-video place-items-center">
+								{#if customWatermarkUrl}
+									<img src={customWatermarkUrl} alt="" class="size-full object-contain" />
+								{:else}
+									<ImagePlus class="size-5 text-zinc-400" aria-hidden="true" />
+								{/if}
+							</div>
+							<div class="border-t border-zinc-100 px-2 py-1">
+								<span class="block text-[11px] leading-tight font-medium">{customWatermark ? 'Personalizada' : 'Subir PNG'}</span>
+							</div>
+							{#if watermark === CUSTOM_WATERMARK}
+								<span class="absolute top-1 right-1 grid size-4 place-items-center rounded-full bg-indigo-600 text-white shadow">
+									<Check class="size-3" strokeWidth={3} aria-hidden="true" />
+								</span>
+							{/if}
+						</label>
+				</div>
+				{#if watermark === CUSTOM_WATERMARK}
+					<p class="mt-2 text-xs text-zinc-500">
+						Se estira a 1280×720 sobre todo el vídeo: usa un PNG de 16:9 con fondo transparente.
+					</p>
 				{/if}
 			</fieldset>
 

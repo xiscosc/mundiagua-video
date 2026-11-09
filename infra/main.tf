@@ -58,6 +58,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
     expiration { days = 1 }
     abort_incomplete_multipart_upload { days_after_initiation = 1 }
   }
+  rule {
+    id     = "expire-custom-watermarks"
+    status = "Enabled"
+    filter { prefix = "watermarks/" }
+    expiration { days = 1 }
+  }
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "outputs" {
@@ -146,7 +152,7 @@ resource "aws_iam_role_policy" "task" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      { Effect = "Allow", Action = "s3:GetObject", Resource = "${aws_s3_bucket.uploads.arn}/in/*" },
+      { Effect = "Allow", Action = "s3:GetObject", Resource = ["${aws_s3_bucket.uploads.arn}/in/*", "${aws_s3_bucket.uploads.arn}/watermarks/*"] },
       { Effect = "Allow", Action = "s3:PutObject", Resource = "${aws_s3_bucket.outputs.arn}/*" },
       { Effect = "Allow", Action = ["dynamodb:GetItem", "dynamodb:UpdateItem"], Resource = aws_dynamodb_table.tasks.arn },
     ]

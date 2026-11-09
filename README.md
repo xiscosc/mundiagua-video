@@ -22,7 +22,7 @@ Task status: `created` → `queued` → `processing` → `done` | `failed`.
 
 | Data | Deleted after |
 |---|---|
-| Uploaded videos | 1 day |
+| Uploaded videos and custom watermarks | 1 day |
 | Processed videos and tasks | 7 days |
 | Container logs (CloudWatch) | 14 days |
 
@@ -80,7 +80,10 @@ Watermarks are included in both the web app and the container image. After chang
        {
          "Effect": "Allow",
          "Action": ["s3:PutObject", "s3:AbortMultipartUpload"],
-         "Resource": "arn:aws:s3:::video-converter-uploads-<account id>-<region>-an/in/*"
+         "Resource": [
+           "arn:aws:s3:::video-converter-uploads-<account id>-<region>-an/in/*",
+           "arn:aws:s3:::video-converter-uploads-<account id>-<region>-an/watermarks/*"
+         ]
        },
        {
          "Effect": "Allow",

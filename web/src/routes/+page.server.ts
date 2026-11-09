@@ -1,9 +1,9 @@
 import { fail } from '@sveltejs/kit';
-import { CreateMultipartUploadCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { CreateMultipartUploadCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { DeleteCommand, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
-import { aws, inputKey } from '#lib/server/aws.ts';
+import { aws, customWatermarkKey, inputKey } from '#lib/server/aws.ts';
 import { WATERMARKS } from '#lib/watermarks.ts';
-import { newTaskSchema, PART_SIZE, RETENTION_DAYS, type CreatedUpload, type Task } from '#lib/tasks.ts';
+import { CUSTOM_WATERMARK, NO_WATERMARK, newTaskSchema, PART_SIZE, RETENTION_DAYS, type CreatedUpload, type Task } from '#lib/tasks.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /** File name for downloads, built from the task label. */
@@ -69,7 +69,8 @@ export const actions: Actions = {
 		if (!parsed.success) return fail(400, { error: parsed.error.issues[0].message });
 		const input = parsed.data;
 
-		if (!WATERMARKS.some((w) => w.name === input.watermark)) {
+		const builtIn = input.watermark !== NO_WATERMARK && input.watermark !== CUSTOM_WATERMARK;
+		if (builtIn && !WATERMARKS.some((w) => w.name === input.watermark)) {
 			return fail(400, { error: 'Esa marca de agua ya no existe. Recarga la página.' });
 		}
 		const { env, db, sign } = aws();
@@ -90,7 +91,11 @@ export const actions: Actions = {
 		const startUrl = await sign(
 			new CreateMultipartUploadCommand({ Bucket: env.UPLOAD_BUCKET, Key: inputKey(task.id) })
 		);
-		return { id: task.id, startUrl, partSize: PART_SIZE } satisfies CreatedUpload;
+		const watermarkUrl =
+			input.watermark === CUSTOM_WATERMARK
+				? await sign(new PutObjectCommand({ Bucket: env.UPLOAD_BUCKET, Key: customWatermarkKey(task.id) }))
+				: undefined;
+		return { id: task.id, startUrl, watermarkUrl, partSize: PART_SIZE } satisfies CreatedUpload;
 	},
 
 	/** Removes the task from the list. Its files are left to expire on their own. */
