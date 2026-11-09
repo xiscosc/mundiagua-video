@@ -1,11 +1,24 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { CircleCheck, CircleX, Clock, Download, Inbox, LoaderCircle, CloudUpload, Trash2 } from '@lucide/svelte';
+	import { invalidate } from '$app/navigation';
+	import { CircleCheck, CircleX, Clock, Download, Inbox, LoaderCircle, CloudUpload, Play, RefreshCw, Trash2, X } from '@lucide/svelte';
 	import type { Task } from '#lib/tasks.ts';
 	import { formatBytes, formatDuration, formatDate } from '#lib/format.ts';
 	import type { ActiveUpload } from './NewTaskForm.svelte';
 
 	let { tasks, upload }: { tasks: Task[]; upload: ActiveUpload | null } = $props();
+
+	let reloading = $state(false);
+	let player: HTMLDialogElement;
+	let playing = $state<Task | null>(null);
+	function play(task: Task) {
+		playing = task;
+		player.showModal();
+	}
+	async function reload() {
+		reloading = true;
+		await invalidate('app:tasks').finally(() => (reloading = false));
+	}
 
 	const STATUS = {
 		uploading: { text: 'Subiendo', icon: CloudUpload, tone: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20' },
@@ -18,9 +31,20 @@
 </script>
 
 <section class="rounded-2xl border border-zinc-200 bg-white shadow-sm" aria-labelledby="tasks-title">
-	<header class="border-b border-zinc-100 px-6 py-5">
-		<h2 id="tasks-title" class="text-base font-semibold">Vídeos</h2>
-		<p class="mt-1 text-sm text-zinc-500">Los vídeos terminados se guardan 7 días.</p>
+	<header class="flex items-start justify-between gap-4 border-b border-zinc-100 px-6 py-5">
+		<div>
+			<h2 id="tasks-title" class="text-base font-semibold">Vídeos</h2>
+			<p class="mt-1 text-sm text-zinc-500">Los vídeos terminados se guardan 7 días.</p>
+		</div>
+		<button
+			type="button"
+			onclick={reload}
+			disabled={reloading}
+			class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 focus-visible:ring-3 focus-visible:ring-indigo-500/30 focus-visible:outline-none disabled:opacity-60"
+		>
+			<RefreshCw class={['size-4', reloading && 'animate-spin']} aria-hidden="true" />
+			Actualizar
+		</button>
 	</header>
 
 	{#if tasks.length === 0}
@@ -70,6 +94,16 @@
 						{/if}
 					</div>
 					<div class="flex shrink-0 items-center gap-2">
+					{#if task.playUrl}
+						<button
+							type="button"
+							onclick={() => play(task)}
+							class="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200 px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 focus-visible:ring-3 focus-visible:ring-indigo-500/40 focus-visible:outline-none"
+						>
+							<Play class="size-4" aria-hidden="true" />
+							Ver
+						</button>
+					{/if}
 					{#if task.downloadUrl}
 						<a
 							href={task.downloadUrl}
@@ -103,3 +137,28 @@
 		</ul>
 	{/if}
 </section>
+
+<!-- Player for finished videos. Closing it (X, Esc or clicking outside) stops playback. -->
+<dialog
+	bind:this={player}
+	onclose={() => (playing = null)}
+	onclick={(e) => e.target === player && player.close()}
+	class="m-auto w-full max-w-4xl overflow-hidden rounded-2xl bg-black p-0 shadow-xl backdrop:bg-black/70"
+	aria-label={playing?.label}
+>
+	{#if playing}
+		<div class="flex items-center justify-between gap-4 bg-zinc-900 px-4 py-2.5 text-white">
+			<p class="truncate text-sm font-medium">{playing.label}</p>
+			<button
+				type="button"
+				onclick={() => player.close()}
+				class="rounded-lg p-1.5 text-zinc-300 hover:bg-white/10 hover:text-white"
+				aria-label="Cerrar"
+			>
+				<X class="size-4" />
+			</button>
+		</div>
+		<!-- svelte-ignore a11y_media_has_caption: output videos have no audio or speech -->
+		<video src={playing.playUrl} controls autoplay playsinline class="aspect-video w-full bg-black"></video>
+	{/if}
+</dialog>

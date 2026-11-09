@@ -42,13 +42,16 @@ async function listTasks() {
 		tasks
 			.filter((t) => t.status === 'done')
 			.map(async (t) => {
-				t.downloadUrl = await sign(
-					new GetObjectCommand({
-						Bucket: env.OUTPUT_BUCKET,
-						Key: `${t.id}.mp4`,
-						ResponseContentDisposition: `attachment; filename="${downloadName(t.label)}"`
-					})
-				);
+				const output = { Bucket: env.OUTPUT_BUCKET, Key: `${t.id}.mp4` };
+				[t.downloadUrl, t.playUrl] = await Promise.all([
+					sign(
+						new GetObjectCommand({
+							...output,
+							ResponseContentDisposition: `attachment; filename="${downloadName(t.label)}"`
+						})
+					),
+					sign(new GetObjectCommand(output))
+				]);
 			})
 	);
 	return tasks;

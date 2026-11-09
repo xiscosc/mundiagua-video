@@ -31,8 +31,10 @@ export interface Task {
 	updatedAt: number;
 	/** Epoch ms after which the task and its output are deleted. */
 	expiresAt: number;
-	/** Signed link, only when status is 'done'. */
+	/** Signed links, only when status is 'done'. */
 	downloadUrl?: string;
+	/** Same file, without the download header, for the in-page player. */
+	playUrl?: string;
 }
 
 export interface Watermark {
