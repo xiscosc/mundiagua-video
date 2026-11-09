@@ -34,12 +34,12 @@ Task status: `created` → `processing` → `done` | `failed`.
 | Watermarks (1280×720 PNG, no spaces in the name) | `web/src/lib/watermarks/` |
 | AWS region and resource names | `infra/main.tf` variables, and the Worker variables in Cloudflare |
 
-Watermarks are included in both the web app and the container image. A push to `main` redeploys both.
+Watermarks are included in both the web app and the container image. After changing them, push to `main` (web app) and run the AWS deploy workflow (container image).
 
 ## Deployment
 
 - **Web app:** deployed by Cloudflare's GitHub integration (Workers Builds) on every push to the selected branch.
-- **AWS:** deployed by `.github/workflows/deploy.yml` on every push to `main`. It runs `terraform apply` in `infra/`, then builds the container image and pushes it to ECR.
+- **AWS:** deployed by `.github/workflows/deploy.yml`, run manually from the Actions tab. It runs `terraform apply` in `infra/`, then builds the container image and pushes it to ECR.
 
 ### One-time setup
 
@@ -69,7 +69,7 @@ Watermarks are included in both the web app and the container image. A push to `
    | Variable | `TF_STATE_BUCKET` | The state bucket from step 2 |
    | Variable | `WEB_ORIGIN` | The Worker URL from step 1, e.g. `https://video-converter.<subdomain>.workers.dev` |
 
-4. Push to `main` to create the AWS resources.
+4. Run the AWS deploy workflow to create the AWS resources.
 
 5. Create an IAM user for the Worker with the policy below (resource names are the defaults from `infra/main.tf`), create an access key for it and configure the Worker in Cloudflare:
 

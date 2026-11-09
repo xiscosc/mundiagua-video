@@ -2,8 +2,7 @@ name: Deploy AWS
 
 # The web app is deployed by Cloudflare's GitHub integration; this workflow handles AWS only.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 # Never run two applies against the same state at once.
 concurrency: deploy
