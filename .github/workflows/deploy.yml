@@ -11,7 +11,7 @@ concurrency: deploy
 jobs:
   deploy:
     # arm64 runner: the container image runs on ARM Fargate, so it builds natively here.
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -19,11 +19,11 @@ jobs:
       TF_VAR_region: ${{ vars.AWS_REGION }}
       TF_VAR_web_origin: ${{ vars.WEB_ORIGIN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
-          terraform_version: 1.16.0
+          terraform_version: 1.17.1
           terraform_wrapper: false
 
       - name: Terraform apply
