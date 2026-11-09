@@ -1,6 +1,6 @@
 # Mundiagua Video Converter
 
-Web app to upload a video, apply a watermark and speed it up. Output: 1280×720, H.265, no audio.
+Web app to upload a video, apply a watermark and speed it up. Output: 1280×720, H.265; audio removed unless the user keeps it (then sped up with the video).
 
 ## Structure
 

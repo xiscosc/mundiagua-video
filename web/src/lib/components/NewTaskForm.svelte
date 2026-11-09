@@ -321,6 +321,17 @@
 					{/if}
 				</p>
 			</fieldset>
+
+			<!-- Audio -->
+			<label class="flex cursor-pointer items-center gap-2.5 text-sm font-medium">
+				<input
+					type="checkbox"
+					name="removeAudio"
+					checked
+					class="size-4 rounded border-zinc-300 accent-indigo-600"
+				/>
+				Eliminar audio
+			</label>
 		</fieldset>
 
 		{#if error}

@@ -70,7 +70,7 @@
 							</span>
 						</div>
 						<p class="mt-1 truncate text-sm text-zinc-500">
-							{task.filename} · {formatBytes(task.size)}{task.duration ? ` · ${formatDuration(task.duration)}` : ''} · {task.speed}× · {task.watermark.replace(/\.png$/, '').replaceAll('_', ' ')}
+							{task.filename} · {formatBytes(task.size)}{task.duration ? ` · ${formatDuration(task.duration)}` : ''} · {task.speed}× · {task.watermark.replace(/\.png$/, '').replaceAll('_', ' ')}{task.removeAudio === false ? ' · con audio' : ''}
 						</p>
 						<p class="mt-0.5 text-xs text-zinc-400">
 							{#if uploading && upload}

@@ -1,7 +1,7 @@
 #!/bin/sh
 # One Fargate task per upload. KEY=in/<task id>.mp4 comes from EventBridge;
 # UPLOAD_BUCKET, OUTPUT_BUCKET and TABLE come from the task definition.
-set -eu
+set -euf # -f: no globbing, so the unquoted $audio below (which contains "0:a?") stays as written
 : "${UPLOAD_BUCKET:?}" "${OUTPUT_BUCKET:?}" "${TABLE:?}" "${KEY:?}"
 id=$(basename "$KEY" .mp4)
 echo "$id" | grep -Eq '^[0-9a-f-]{36}$' || { echo "bad key: $KEY" >&2; exit 1; }
@@ -15,20 +15,28 @@ status() {
 }
 trap 'rc=$?; [ $rc -eq 0 ] || status failed || true; exit $rc' EXIT
 
-set -- $(aws dynamodb get-item --table-name "$TABLE" --key "$k" --query '[Item.speed.N, Item.watermark.S]' --output text)
-speed=$1 wm=$2
+set -- $(aws dynamodb get-item --table-name "$TABLE" --key "$k" --query '[Item.speed.N, Item.watermark.S, Item.removeAudio.BOOL]' --output text)
+speed=$1 wm=$2 remove_audio=$3
 # speed goes into the ffmpeg filter string and wm into a file path, so re-check both here.
 echo "$speed" | grep -Eq '^[1-9][0-9]?$' || { echo "bad speed: $speed" >&2; exit 1; }
 echo "$wm" | grep -Eq '^[^/[:space:]]+\.png$' || { echo "bad watermark: $wm" >&2; exit 1; }
 
+# Keep the audio only when explicitly asked (older tasks have no removeAudio and lose it as before).
+# atempo speeds it up by the same factor, so it stays in sync with the video.
+if [ "$remove_audio" = False ]; then
+  audio="-map 0:a? -filter:a atempo=$speed -c:a aac -b:a 128k"
+else
+  audio="-an"
+fi
+
 status processing
-echo "task $id: ${speed}x with $wm"
+echo "task $id: ${speed}x with $wm, audio: $audio"
 aws s3 cp --only-show-errors "s3://$UPLOAD_BUCKET/$KEY" in.mp4
 
 # pools=$(nproc): x265 can't detect CPUs via libnuma inside containers and silently drops its thread pool.
 ffmpeg -nostdin -hide_banner -loglevel warning -y -i in.mp4 -i "/watermarks/$wm" -filter_complex \
-  "[0:v]setpts=PTS/$speed,fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1[v];[1:v]format=rgba,scale=1280:720[wm];[v][wm]overlay=0:0:format=auto" \
-  -an -c:v libx265 -x265-params "pools=$(nproc):log-level=error" -preset medium -crf 28 -tag:v hvc1 -pix_fmt yuv420p -movflags +faststart out.mp4
+  "[0:v]setpts=PTS/$speed,fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1[v];[1:v]format=rgba,scale=1280:720[wm];[v][wm]overlay=0:0:format=auto[out]" \
+  -map "[out]" $audio -c:v libx265 -x265-params "pools=$(nproc):log-level=error" -preset medium -crf 28 -tag:v hvc1 -pix_fmt yuv420p -movflags +faststart out.mp4
 
 aws s3 cp --only-show-errors out.mp4 "s3://$OUTPUT_BUCKET/$id.mp4"
 status done

@@ -61,7 +61,11 @@ export const actions: Actions = {
 	/** Creates the task and signs the request that starts its upload; the browser does the rest (src/lib/upload.ts). */
 	create: async ({ request }) => {
 		const form = Object.fromEntries(await request.formData());
-		const parsed = newTaskSchema.safeParse({ ...form, duration: form.duration || undefined });
+		const parsed = newTaskSchema.safeParse({
+			...form,
+			duration: form.duration || undefined,
+			removeAudio: form.removeAudio === 'on' // an unchecked checkbox isn't sent at all
+		});
 		if (!parsed.success) return fail(400, { error: parsed.error.issues[0].message });
 		const input = parsed.data;
 

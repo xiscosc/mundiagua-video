@@ -24,6 +24,8 @@ export interface Task {
 	duration?: number;
 	speed: number;
 	watermark: string;
+	/** Output without audio. When false, the audio is kept and sped up with the video. */
+	removeAudio: boolean;
 	status: TaskStatus;
 	/** Epoch ms. */
 	createdAt: number;
@@ -61,5 +63,6 @@ export const newTaskSchema = z.object({
 	size: z.coerce.number().int().positive().max(MAX_SIZE, `El vídeo no puede superar ${MAX_SIZE / GB} GB`),
 	duration: z.coerce.number().positive().optional(),
 	speed: z.coerce.number().refine((s) => (SPEEDS as readonly number[]).includes(s), 'Elige una aceleración'),
-	watermark: z.string().regex(WATERMARK_NAME, 'Elige una marca de agua')
+	watermark: z.string().regex(WATERMARK_NAME, 'Elige una marca de agua'),
+	removeAudio: z.boolean()
 });
