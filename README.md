@@ -80,12 +80,12 @@ Watermarks are included in both the web app and the container image. After chang
        {
          "Effect": "Allow",
          "Action": ["s3:PutObject", "s3:AbortMultipartUpload"],
-         "Resource": "arn:aws:s3:::video-converter-uploads/in/*"
+         "Resource": "arn:aws:s3:::video-converter-uploads-<account id>-<region>-an/in/*"
        },
        {
          "Effect": "Allow",
          "Action": "s3:GetObject",
-         "Resource": "arn:aws:s3:::video-converter-outputs/*"
+         "Resource": "arn:aws:s3:::video-converter-outputs-<account id>-<region>-an/*"
        },
        {
          "Effect": "Allow",

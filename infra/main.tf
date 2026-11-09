@@ -12,7 +12,7 @@ terraform {
 
 variable "region" { default = "eu-west-1" }
 variable "name" {
-  description = "Prefix for all resources; bucket names derive from it so it must be globally unique-ish"
+  description = "Prefix for all resource names"
   default     = "video-converter"
 }
 
@@ -22,8 +22,21 @@ provider "aws" { region = var.region }
 
 # ---------- storage ----------
 
-resource "aws_s3_bucket" "uploads" { bucket = "${var.name}-uploads" }
-resource "aws_s3_bucket" "outputs" { bucket = "${var.name}-outputs" }
+# Account-regional namespace: names only have to be unique within this account and region.
+data "aws_caller_identity" "current" {}
+locals {
+  bucket_suffix = "${data.aws_caller_identity.current.account_id}-${var.region}-an"
+}
+
+resource "aws_s3_bucket" "uploads" {
+  bucket           = "${var.name}-uploads-${local.bucket_suffix}"
+  bucket_namespace = "account-regional"
+}
+
+resource "aws_s3_bucket" "outputs" {
+  bucket           = "${var.name}-outputs-${local.bucket_suffix}"
+  bucket_namespace = "account-regional"
+}
 
 resource "aws_s3_bucket_cors_configuration" "uploads" {
   bucket = aws_s3_bucket.uploads.id
