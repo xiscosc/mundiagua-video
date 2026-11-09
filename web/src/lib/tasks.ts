@@ -13,7 +13,7 @@ export const RETENTION_DAYS = 7;
 /** A PNG directly in watermarks/: no slashes, no whitespace. Same rule as container/entrypoint.sh. */
 export const WATERMARK_NAME = /^[^/\s]+\.png$/;
 
-export type TaskStatus = 'created' | 'processing' | 'done' | 'failed';
+export type TaskStatus = 'created' | 'queued' | 'processing' | 'done' | 'failed';
 
 export interface Task {
 	id: string;

@@ -33,7 +33,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		case 'complete':
 			// Completing the upload makes S3 emit "Object Created", which starts the Fargate job.
-			// Mark it processing now: the container takes about a minute to start and sets it again.
+			// Mark it queued until the container starts (about a minute) and sets it to processing.
 			// If the browser then fails to complete, it cancels and the task is deleted.
 			await db.send(
 				new UpdateCommand({
@@ -42,7 +42,7 @@ export const POST: RequestHandler = async ({ request }) => {
 					ConditionExpression: 'attribute_exists(id)',
 					UpdateExpression: 'SET #status = :status, updatedAt = :now',
 					ExpressionAttributeNames: { '#status': 'status' },
-					ExpressionAttributeValues: { ':status': 'processing', ':now': Date.now() }
+					ExpressionAttributeValues: { ':status': 'queued', ':now': Date.now() }
 				})
 			);
 			return json({ url: await sign(new CompleteMultipartUploadCommand(target)) });

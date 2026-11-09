@@ -10,6 +10,7 @@
 	const STATUS = {
 		uploading: { text: 'Subiendo', icon: CloudUpload, tone: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20' },
 		created: { text: 'Pendiente de subida', icon: Clock, tone: 'bg-zinc-100 text-zinc-600 ring-zinc-500/20' },
+		queued: { text: 'Pendiente de procesar', icon: Clock, tone: 'bg-amber-50 text-amber-700 ring-amber-600/20' },
 		processing: { text: 'Procesando', icon: LoaderCircle, tone: 'bg-sky-50 text-sky-700 ring-sky-600/20' },
 		done: { text: 'Listo', icon: CircleCheck, tone: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' },
 		failed: { text: 'Error', icon: CircleX, tone: 'bg-red-50 text-red-700 ring-red-600/20' }
@@ -50,6 +51,8 @@
 						<p class="mt-0.5 text-xs text-zinc-400">
 							{#if uploading && upload}
 								{Math.floor((upload.loaded / upload.total) * 100)}% subido
+							{:else if task.status === 'queued'}
+								Subido {formatDate(task.updatedAt)}
 							{:else if task.status === 'processing'}
 								Iniciado {formatDate(task.updatedAt)}{task.duration ? ` · duración final ${formatDuration(task.duration / task.speed)}` : ''}
 							{:else if task.status === 'done'}

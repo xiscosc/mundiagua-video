@@ -16,7 +16,7 @@ Web app to upload a video, apply a watermark and speed it up. Output: 1280×720,
 2. The completed upload triggers EventBridge, which starts a Fargate task.
 3. The container processes the video, writes `<task id>.mp4` to the outputs bucket and updates the task status.
 
-Task status: `created` → `processing` → `done` | `failed`.
+Task status: `created` → `queued` → `processing` → `done` | `failed`.
 
 ## Retention
 
