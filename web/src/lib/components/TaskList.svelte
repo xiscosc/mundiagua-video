@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { CircleCheck, CircleX, Clock, Download, Inbox, LoaderCircle, CloudUpload } from '@lucide/svelte';
+	import { enhance } from '$app/forms';
+	import { CircleCheck, CircleX, Clock, Download, Inbox, LoaderCircle, CloudUpload, Trash2 } from '@lucide/svelte';
 	import type { Task } from '#lib/tasks.ts';
 	import { formatBytes, formatDuration, formatDate } from '#lib/format.ts';
 	import type { ActiveUpload } from './NewTaskForm.svelte';
@@ -65,6 +66,7 @@
 							</div>
 						{/if}
 					</div>
+					<div class="flex shrink-0 items-center gap-2">
 					{#if task.downloadUrl}
 						<a
 							href={task.downloadUrl}
@@ -74,6 +76,25 @@
 							Descargar
 						</a>
 					{/if}
+					{#if !uploading}
+						<form
+							method="POST"
+							action="?/delete"
+							use:enhance={({ cancel }) => {
+								if (!confirm(`¿Eliminar «${task.label}» de la lista?`)) cancel();
+							}}
+						>
+							<input type="hidden" name="id" value={task.id} />
+							<button
+								class="grid size-9 place-items-center rounded-lg text-zinc-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:ring-3 focus-visible:ring-red-500/30 focus-visible:outline-none"
+								aria-label="Eliminar {task.label}"
+								title="Eliminar"
+							>
+								<Trash2 class="size-4" aria-hidden="true" />
+							</button>
+						</form>
+					{/if}
+					</div>
 				</li>
 			{/each}
 		</ul>

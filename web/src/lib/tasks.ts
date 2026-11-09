@@ -1,7 +1,7 @@
 // Task model and limits, shared by the server and the browser.
 import { z } from 'zod';
 
-export const SPEEDS = [10, 15, 20, 25, 30] as const;
+export const SPEEDS = [1, 2, 3, 10, 15, 20, 25, 30] as const;
 export const DEFAULT_SPEED = 20;
 export const GB = 1024 ** 3;
 /** Keep below the Fargate task's ephemeral storage (infra/main.tf). */
@@ -44,7 +44,8 @@ export interface Watermark {
 /** Returned by the `create` form action; the browser then uploads the video in parts. */
 export interface CreatedUpload {
 	id: string;
-	uploadId: string;
+	/** Signed S3 request that starts the multipart upload. */
+	startUrl: string;
 	partSize: number;
 }
 

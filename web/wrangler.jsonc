@@ -12,5 +12,9 @@
 	"preview_urls": false,
 	// AWS settings and keys are configured on the Worker in Cloudflare (see README);
 	// keep_vars stops deploys from removing them. For `npm run dev`, put them in .dev.vars.
-	"keep_vars": true
+	"keep_vars": true,
+	"observability": {
+		"enabled": true,
+		"logs": { "enabled": true, "invocation_logs": true, "persist": true }
+	}
 }

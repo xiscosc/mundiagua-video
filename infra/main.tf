@@ -41,7 +41,7 @@ resource "aws_s3_bucket" "outputs" {
 resource "aws_s3_bucket_cors_configuration" "uploads" {
   bucket = aws_s3_bucket.uploads.id
   cors_rule {
-    allowed_methods = ["PUT"]
+    allowed_methods = ["PUT", "POST", "DELETE"] # the browser starts, uploads, completes and aborts uploads
     allowed_origins = [var.web_origin]
     allowed_headers = ["*"]
     expose_headers  = ["ETag"] # the browser needs each part's ETag to complete the multipart upload

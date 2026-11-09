@@ -31,9 +31,7 @@
 	{/if}
 
 	<main class="mx-auto grid max-w-7xl items-start gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:py-10">
-		<div class="lg:sticky lg:top-6">
-			<NewTaskForm watermarks={WATERMARKS} bind:upload />
-		</div>
+		<NewTaskForm watermarks={WATERMARKS} bind:upload />
 		<TaskList tasks={data.tasks} {upload} />
 	</main>
 </div>

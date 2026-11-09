@@ -168,6 +168,19 @@
 				<span class="mb-2 block text-sm font-medium">Vídeo</span>
 				{#if file}
 					<div class="overflow-hidden rounded-xl border border-zinc-200">
+						<!-- Preview, laid out like ffmpeg: video letterboxed to 16:9, watermark stretched over the frame -->
+						<div
+							class="relative aspect-video bg-black"
+							role="img"
+							aria-label="Vista previa del vídeo con la marca de agua"
+						>
+							{#if frame}
+								<img src={frame} alt="" class="absolute inset-0 size-full object-contain" />
+							{/if}
+							{#if watermarkUrl}
+								<img src={watermarkUrl} alt="" class="absolute inset-0 size-full" />
+							{/if}
+						</div>
 						<div class="flex items-center gap-3 px-4 py-3">
 							<Film class="size-5 shrink-0 text-zinc-400" aria-hidden="true" />
 							<div class="min-w-0 flex-1">
@@ -246,7 +259,7 @@
 						No hay marcas de agua disponibles.
 					</p>
 				{:else}
-					<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+					<div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
 						{#each watermarks as wm (wm.name)}
 							<label
 								class={[
@@ -267,12 +280,12 @@
 								<div class="bg-checkerboard aspect-video">
 									<img src={wm.url} alt="" class="size-full object-contain" loading="lazy" />
 								</div>
-								<div class="flex items-center gap-1.5 border-t border-zinc-100 px-2.5 py-1.5">
-									<span class="truncate text-xs font-medium">{wm.name.replace(/\.png$/, '').replaceAll('_', ' ')}</span>
+								<div class="border-t border-zinc-100 px-2 py-1">
+									<span class="block text-[11px] leading-tight font-medium">{wm.name.replace(/\.png$/, '').replaceAll('_', ' ')}</span>
 								</div>
 								{#if watermark === wm.name}
-									<span class="absolute top-1.5 right-1.5 grid size-5 place-items-center rounded-full bg-indigo-600 text-white shadow">
-										<Check class="size-3.5" strokeWidth={3} aria-hidden="true" />
+									<span class="absolute top-1 right-1 grid size-4 place-items-center rounded-full bg-indigo-600 text-white shadow">
+										<Check class="size-3" strokeWidth={3} aria-hidden="true" />
 									</span>
 								{/if}
 							</label>
@@ -281,29 +294,10 @@
 				{/if}
 			</fieldset>
 
-			<!-- Preview: same layout as ffmpeg (video letterboxed to 16:9, watermark stretched over the frame) -->
-			{#if file}
-				<div>
-					<span class="mb-2 block text-sm font-medium">Vista previa</span>
-					<div
-						class="relative aspect-video overflow-hidden rounded-xl bg-black"
-						role="img"
-						aria-label="Vista previa del vídeo con la marca de agua"
-					>
-						{#if frame}
-							<img src={frame} alt="" class="absolute inset-0 size-full object-contain" />
-						{/if}
-						{#if watermarkUrl}
-							<img src={watermarkUrl} alt="" class="absolute inset-0 size-full" />
-						{/if}
-					</div>
-				</div>
-			{/if}
-
 			<!-- Speed -->
 			<fieldset>
 				<legend class="mb-2 text-sm font-medium">Aceleración</legend>
-				<div class="grid grid-cols-5 gap-1 rounded-xl bg-zinc-100 p-1">
+				<div class="grid grid-cols-4 gap-1 rounded-xl bg-zinc-100 p-1 sm:grid-cols-8">
 					{#each SPEEDS as s (s)}
 						<label
 							class={[

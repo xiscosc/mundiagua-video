@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { CreateMultipartUploadCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { DeleteCommand, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 import { aws, inputKey } from '#lib/server/aws.ts';
 import { WATERMARKS } from '#lib/watermarks.ts';
 import { newTaskSchema, PART_SIZE, RETENTION_DAYS, type CreatedUpload, type Task } from '#lib/tasks.ts';
@@ -55,7 +55,7 @@ async function listTasks() {
 }
 
 export const actions: Actions = {
-	/** Creates the task and starts a multipart upload, which the browser then fills (see routes/upload). */
+	/** Creates the task and signs the request that starts its upload; the browser does the rest (src/lib/upload.ts). */
 	create: async ({ request }) => {
 		const form = Object.fromEntries(await request.formData());
 		const parsed = newTaskSchema.safeParse({ ...form, duration: form.duration || undefined });
@@ -65,7 +65,7 @@ export const actions: Actions = {
 		if (!WATERMARKS.some((w) => w.name === input.watermark)) {
 			return fail(400, { error: 'Esa marca de agua ya no existe. Recarga la página.' });
 		}
-		const { env, s3, db } = aws();
+		const { env, db, sign } = aws();
 
 		const now = Date.now();
 		const task: Task = {
@@ -80,15 +80,17 @@ export const actions: Actions = {
 		await db.send(
 			new PutCommand({ TableName: env.TABLE, Item: { ...task, ttl: Math.floor(task.expiresAt / 1000) } })
 		);
-		const { UploadId } = await s3.send(
-			new CreateMultipartUploadCommand({
-				Bucket: env.UPLOAD_BUCKET,
-				Key: inputKey(task.id),
-				ContentType: 'video/mp4'
-			})
+		const startUrl = await sign(
+			new CreateMultipartUploadCommand({ Bucket: env.UPLOAD_BUCKET, Key: inputKey(task.id) })
 		);
-		if (!UploadId) return fail(500, { error: 'No se pudo iniciar la subida. Inténtalo de nuevo.' });
+		return { id: task.id, startUrl, partSize: PART_SIZE } satisfies CreatedUpload;
+	},
 
-		return { id: task.id, uploadId: UploadId, partSize: PART_SIZE } satisfies CreatedUpload;
+	/** Removes the task from the list. Its files are left to expire on their own. */
+	delete: async ({ request }) => {
+		const id = (await request.formData()).get('id');
+		if (typeof id !== 'string' || !/^[0-9a-f-]{36}$/.test(id)) return fail(400, { error: 'Tarea no válida.' });
+		const { env, db } = aws();
+		await db.send(new DeleteCommand({ TableName: env.TABLE, Key: { id } }));
 	}
 };

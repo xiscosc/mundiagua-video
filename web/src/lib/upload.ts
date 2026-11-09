@@ -1,17 +1,27 @@
-// Browser side of the multipart upload: 4 parts in flight, each retried up to 3 times.
+// Browser side of the upload. The server signs every S3 request; the browser sends them:
+// start the multipart upload, upload the parts (4 at a time, 3 attempts each), then complete it.
 import type { CreatedUpload } from './tasks';
 
 const CONCURRENCY = 4;
 const ATTEMPTS = 3;
 
-async function call(body: Record<string, unknown>) {
+/** Asks the server to sign an S3 request (see src/routes/upload/+server.ts). */
+async function signed(body: Record<string, unknown>): Promise<string | null> {
 	const res = await fetch('/upload', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify(body)
 	});
 	if (!res.ok) throw new Error(`server answered ${res.status}`);
-	return res;
+	return ((await res.json()) as { url: string | null }).url;
+}
+
+/** Sends an S3 request and returns its XML body; S3 can answer 200 with an <Error> body. */
+async function s3(url: string, init: RequestInit) {
+	const res = await fetch(url, init);
+	const text = await res.text();
+	if (!res.ok || text.includes('<Error>')) throw new Error(`S3 answered ${res.status}`);
+	return text;
 }
 
 function putPart(url: string, blob: Blob, signal: AbortSignal, onProgress: (loaded: number) => void) {
@@ -32,12 +42,12 @@ function putPart(url: string, blob: Blob, signal: AbortSignal, onProgress: (load
 }
 
 /**
- * Uploads the file and completes the multipart upload (which starts processing).
- * On failure or cancel, the task and partial upload are deleted so nothing is left behind.
+ * Uploads the file and completes the upload, which starts processing.
+ * On failure or cancel, the task and the partial upload are deleted so nothing is left behind.
  */
 export async function uploadVideo(
 	file: File,
-	{ id, uploadId, partSize }: CreatedUpload,
+	{ id, startUrl, partSize }: CreatedUpload,
 	signal: AbortSignal,
 	onProgress: (loaded: number) => void
 ) {
@@ -48,17 +58,16 @@ export async function uploadVideo(
 	// One failed part stops the others.
 	const stop = new AbortController();
 	signal.addEventListener('abort', () => stop.abort(), { once: true });
+	let uploadId: string | undefined;
 
-	let next = 0;
-	async function worker() {
+	async function worker(uploadId: string) {
 		while (next < count && !stop.signal.aborted) {
 			const i = next++;
 			const blob = file.slice(i * partSize, (i + 1) * partSize);
 			for (let attempt = 1; ; attempt++) {
 				try {
-					const res = await call({ action: 'sign', id, uploadId, part: i + 1 });
-					const { url } = (await res.json()) as { url: string };
-					etags[i] = await putPart(url, blob, stop.signal, (n) => {
+					const url = await signed({ action: 'sign', id, uploadId, part: i + 1 });
+					etags[i] = await putPart(url!, blob, stop.signal, (n) => {
 						loaded[i] = n;
 						report();
 					});
@@ -72,13 +81,31 @@ export async function uploadVideo(
 			}
 		}
 	}
+	let next = 0;
 
 	try {
-		await Promise.all(Array.from({ length: Math.min(CONCURRENCY, count) }, worker));
-		await call({ action: 'complete', id, uploadId, etags });
+		const started = await s3(startUrl, { method: 'POST', signal: stop.signal });
+		uploadId = new DOMParser().parseFromString(started, 'application/xml').querySelector('UploadId')
+			?.textContent ?? undefined;
+		if (!uploadId) throw new Error('S3 returned no upload id');
+
+		const workers = Math.min(CONCURRENCY, count);
+		await Promise.all(Array.from({ length: workers }, () => worker(uploadId!)));
+
+		const parts = etags.map((etag, i) => `<Part><PartNumber>${i + 1}</PartNumber><ETag>${etag}</ETag></Part>`);
+		const completeUrl = await signed({ action: 'complete', id, uploadId });
+		await s3(completeUrl!, {
+			method: 'POST',
+			body: `<CompleteMultipartUpload>${parts.join('')}</CompleteMultipartUpload>`
+		});
 	} catch (err) {
 		stop.abort();
-		await call({ action: 'cancel', id, uploadId }).catch(() => {});
+		try {
+			const abortUrl = await signed({ action: 'cancel', id, uploadId });
+			if (abortUrl) await fetch(abortUrl, { method: 'DELETE' });
+		} catch {
+			// Best effort: S3's lifecycle rule removes unfinished uploads after a day anyway.
+		}
 		throw err;
 	}
 }
