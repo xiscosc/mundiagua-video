@@ -96,6 +96,19 @@ resource "aws_ecr_repository" "ffmpeg" {
   force_delete = true
 }
 
+# Each deploy moves `latest` to the new image; delete the untagged previous ones.
+resource "aws_ecr_lifecycle_policy" "ffmpeg" {
+  repository = aws_ecr_repository.ffmpeg.name
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Expire untagged images"
+      selection    = { tagStatus = "untagged", countType = "sinceImagePushed", countUnit = "days", countNumber = 1 }
+      action       = { type = "expire" }
+    }]
+  })
+}
+
 resource "aws_cloudwatch_log_group" "ffmpeg" {
   name              = "/ecs/${var.name}"
   retention_in_days = 14
