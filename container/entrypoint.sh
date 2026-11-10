@@ -36,7 +36,7 @@ fi
 # Off for older tasks, which have no timestamp field.
 clock=""
 if [ "$timestamp" = True ]; then
-  clock="setpts=PTS-STARTPTS,drawtext=fontfile=/usr/share/fonts/dejavu/DejaVuSans.ttf:text='%{pts\\:gmtime\\:0\\:%H\\\\\\:%M\\\\\\:%S}':x=w/40:y=h-th-h/40:fontsize=h/18:fontcolor=white:box=1:boxcolor=black@0.5:boxborderw=h/90,"
+  clock="setpts=PTS-STARTPTS,drawtext=fontfile=/usr/share/fonts/dejavu/DejaVuSans.ttf:text='%{pts\\:gmtime\\:0\\:%H\\\\\\:%M\\\\\\:%S}':x=w/40:y=h/40:fontsize=h/18:fontcolor=white:box=1:boxcolor=black@0.5:boxborderw=h/90,"
 fi
 video="[0:v]${clock}setpts=PTS/$speed,fps=30,scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1"
 if [ "$wm" = none ]; then
