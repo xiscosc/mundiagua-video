@@ -201,7 +201,8 @@
 								}}
 							></video>
 							{#if watermarkUrl}
-								<img src={watermarkUrl} alt="" class="absolute inset-0 size-full" />
+								<!-- z-10: hardware-decoded video is composited above later siblings without it. -->
+								<img src={watermarkUrl} alt="" class="absolute inset-0 z-10 size-full" />
 							{/if}
 						</div>
 						<div class="flex items-center gap-3 px-4 py-3">
