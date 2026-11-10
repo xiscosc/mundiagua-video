@@ -12,7 +12,7 @@ Web app to upload a video, apply a watermark and speed it up. Output: 1280×720,
 
 ## How it works
 
-1. The web app creates a task in DynamoDB. The browser uploads the video to S3 (`in/<task id>`, any format ffmpeg reads: MP4, MOV, MKV, AVI, WebM…) using signed multipart URLs.
+1. The web app creates a task in DynamoDB. The browser uploads the video to S3 (`in/<task id>.<extension>`, keeping the file's extension; any format ffmpeg reads: MP4, MOV, MKV, AVI, WebM…) using signed multipart URLs.
 2. The completed upload triggers EventBridge, which starts a Fargate task.
 3. The container processes the video, writes `<task id>.mp4` to the outputs bucket and updates the task status.
 

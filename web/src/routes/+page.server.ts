@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { CreateMultipartUploadCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { DeleteCommand, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
-import { aws, customWatermarkKey, inputKey } from '#lib/server/aws.ts';
+import { aws, customWatermarkKey, inputKey, videoExtension } from '#lib/server/aws.ts';
 import { WATERMARKS } from '#lib/watermarks.ts';
 import { CUSTOM_WATERMARK, NO_WATERMARK, newTaskSchema, PART_SIZE, RETENTION_DAYS, type CreatedUpload, type Task } from '#lib/tasks.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -64,10 +64,12 @@ export const actions: Actions = {
 		const parsed = newTaskSchema.safeParse({
 			...form,
 			duration: form.duration || undefined,
-			removeAudio: form.removeAudio === 'on' // an unchecked checkbox isn't sent at all
+			// An unchecked checkbox isn't sent at all.
+			removeAudio: form.removeAudio === 'on',
+			timestamp: form.timestamp === 'on'
 		});
 		if (!parsed.success) return fail(400, { error: parsed.error.issues[0].message });
-		const input = parsed.data;
+		const { contentType, ...input } = parsed.data;
 
 		const builtIn = input.watermark !== NO_WATERMARK && input.watermark !== CUSTOM_WATERMARK;
 		if (builtIn && !WATERMARKS.some((w) => w.name === input.watermark)) {
@@ -88,14 +90,15 @@ export const actions: Actions = {
 		await db.send(
 			new PutCommand({ TableName: env.TABLE, Item: { ...task, ttl: Math.floor(task.expiresAt / 1000) } })
 		);
+		const ext = videoExtension(input.filename);
 		const startUrl = await sign(
-			new CreateMultipartUploadCommand({ Bucket: env.UPLOAD_BUCKET, Key: inputKey(task.id) })
+			new CreateMultipartUploadCommand({ Bucket: env.UPLOAD_BUCKET, Key: inputKey(task.id, ext), ContentType: contentType })
 		);
 		const watermarkUrl =
 			input.watermark === CUSTOM_WATERMARK
-				? await sign(new PutObjectCommand({ Bucket: env.UPLOAD_BUCKET, Key: customWatermarkKey(task.id) }))
+				? await sign(new PutObjectCommand({ Bucket: env.UPLOAD_BUCKET, Key: customWatermarkKey(task.id), ContentType: 'image/png' }))
 				: undefined;
-		return { id: task.id, startUrl, watermarkUrl, partSize: PART_SIZE } satisfies CreatedUpload;
+		return { id: task.id, startUrl, contentType, ext, watermarkUrl, partSize: PART_SIZE } satisfies CreatedUpload;
 	},
 
 	/** Removes the task from the list. Its files are left to expire on their own. */

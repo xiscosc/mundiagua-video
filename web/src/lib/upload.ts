@@ -47,7 +47,7 @@ function putPart(url: string, blob: Blob, signal: AbortSignal, onProgress: (load
  */
 export async function uploadVideo(
 	file: File,
-	{ id, startUrl, watermarkUrl, partSize }: CreatedUpload,
+	{ id, startUrl, contentType, ext, watermarkUrl, partSize }: CreatedUpload,
 	signal: AbortSignal,
 	onProgress: (loaded: number) => void,
 	customWatermark?: File
@@ -67,7 +67,7 @@ export async function uploadVideo(
 			const blob = file.slice(i * partSize, (i + 1) * partSize);
 			for (let attempt = 1; ; attempt++) {
 				try {
-					const url = await signed({ action: 'sign', id, uploadId, part: i + 1 });
+					const url = await signed({ action: 'sign', id, ext, uploadId, part: i + 1 });
 					etags[i] = await putPart(url!, blob, stop.signal, (n) => {
 						loaded[i] = n;
 						report();
@@ -87,9 +87,9 @@ export async function uploadVideo(
 	try {
 		// The custom watermark goes first: completing the video upload starts processing, which needs it.
 		if (watermarkUrl && customWatermark) {
-			await s3(watermarkUrl, { method: 'PUT', body: customWatermark, signal: stop.signal });
+			await s3(watermarkUrl, { method: 'PUT', headers: { 'content-type': 'image/png' }, body: customWatermark, signal: stop.signal });
 		}
-		const started = await s3(startUrl, { method: 'POST', signal: stop.signal });
+		const started = await s3(startUrl, { method: 'POST', headers: { 'content-type': contentType }, signal: stop.signal });
 		uploadId = new DOMParser().parseFromString(started, 'application/xml').querySelector('UploadId')
 			?.textContent ?? undefined;
 		if (!uploadId) throw new Error('S3 returned no upload id');
@@ -98,7 +98,7 @@ export async function uploadVideo(
 		await Promise.all(Array.from({ length: workers }, () => worker(uploadId!)));
 
 		const parts = etags.map((etag, i) => `<Part><PartNumber>${i + 1}</PartNumber><ETag>${etag}</ETag></Part>`);
-		const completeUrl = await signed({ action: 'complete', id, uploadId });
+		const completeUrl = await signed({ action: 'complete', id, ext, uploadId });
 		await s3(completeUrl!, {
 			method: 'POST',
 			body: `<CompleteMultipartUpload>${parts.join('')}</CompleteMultipartUpload>`
@@ -106,7 +106,7 @@ export async function uploadVideo(
 	} catch (err) {
 		stop.abort();
 		try {
-			const abortUrl = await signed({ action: 'cancel', id, uploadId });
+			const abortUrl = await signed({ action: 'cancel', id, ext, uploadId });
 			if (abortUrl) await fetch(abortUrl, { method: 'DELETE' });
 		} catch {
 			// Best effort: S3's lifecycle rule removes unfinished uploads after a day anyway.

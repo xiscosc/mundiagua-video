@@ -136,6 +136,8 @@
 		formData.set('watermark', watermark);
 		formData.set('filename', video.name);
 		formData.set('size', String(video.size));
+		// Browsers leave the type empty for some videos (e.g. MKV).
+		formData.set('contentType', video.type || 'application/octet-stream');
 		if (duration) formData.set('duration', String(duration));
 		creating = true;
 
@@ -395,6 +397,12 @@
 					class="size-4 rounded border-zinc-300 accent-zinc-900"
 				/>
 				Eliminar audio
+			</label>
+
+			<!-- Elapsed time -->
+			<label class="flex cursor-pointer items-center gap-2.5 text-sm font-medium">
+				<input type="checkbox" name="timestamp" class="size-4 rounded border-zinc-300 accent-indigo-600" />
+				Mostrar tiempo transcurrido
 			</label>
 		</fieldset>
 

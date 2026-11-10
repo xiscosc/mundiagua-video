@@ -8,16 +8,17 @@ import {
 	UploadPartCommand
 } from '@aws-sdk/client-s3';
 import { DeleteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { aws, inputKey } from '#lib/server/aws.ts';
+import { aws, EXTENSION, inputKey } from '#lib/server/aws.ts';
 import type { RequestHandler } from './$types';
 
 const id = z.uuid();
+const ext = z.string().regex(EXTENSION);
 const uploadId = z.string().min(1);
 const body = z.discriminatedUnion('action', [
-	z.object({ action: z.literal('sign'), id, uploadId, part: z.number().int().min(1).max(10_000) }),
-	z.object({ action: z.literal('complete'), id, uploadId }),
+	z.object({ action: z.literal('sign'), id, ext, uploadId, part: z.number().int().min(1).max(10_000) }),
+	z.object({ action: z.literal('complete'), id, ext, uploadId }),
 	// uploadId is missing when the upload failed before S3 started it.
-	z.object({ action: z.literal('cancel'), id, uploadId: uploadId.optional() })
+	z.object({ action: z.literal('cancel'), id, ext, uploadId: uploadId.optional() })
 ]);
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -25,7 +26,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (!parsed.success) error(400, 'Invalid upload request');
 	const req = parsed.data;
 	const { env, db, sign } = aws();
-	const target = { Bucket: env.UPLOAD_BUCKET, Key: inputKey(req.id), UploadId: req.uploadId };
+	const target = { Bucket: env.UPLOAD_BUCKET, Key: inputKey(req.id, req.ext), UploadId: req.uploadId };
 
 	switch (req.action) {
 		case 'sign':

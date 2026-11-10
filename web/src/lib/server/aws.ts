@@ -4,8 +4,10 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env as workerEnv } from 'cloudflare:workers';
 
-// No extension: the upload can be any container, ffmpeg detects it from the content.
-export const inputKey = (taskId: string) => `in/${taskId}`;
+/** The upload keeps the file's extension, if it has one. */
+export const inputKey = (taskId: string, ext: string) => (ext ? `in/${taskId}.${ext}` : `in/${taskId}`);
+export const EXTENSION = /^[A-Za-z0-9]{0,8}$/;
+export const videoExtension = (filename: string) => /\.([A-Za-z0-9]{1,8})$/.exec(filename)?.[1] ?? '';
 // Outside in/, so uploading it doesn't start a processing job.
 export const customWatermarkKey = (taskId: string) => `watermarks/${taskId}.png`;
 

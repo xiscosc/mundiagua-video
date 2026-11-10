@@ -43,6 +43,8 @@ export interface Task {
 	watermark: string;
 	/** Output without audio. When false, the audio is kept and sped up with the video. */
 	removeAudio: boolean;
+	/** Burns the elapsed time of the original video into the output, so the speed-up shows. */
+	timestamp: boolean;
 	status: TaskStatus;
 	/** Epoch ms. */
 	createdAt: number;
@@ -67,6 +69,10 @@ export interface CreatedUpload {
 	id: string;
 	/** Signed S3 request that starts the multipart upload. */
 	startUrl: string;
+	/** Signed into startUrl, so the browser must send exactly this Content-Type. */
+	contentType: string;
+	/** Extension of the S3 key; the browser sends it back when signing the other requests. */
+	ext: string;
 	/** Signed PUT for the custom watermark PNG, when the task uses one. */
 	watermarkUrl?: string;
 	partSize: number;
@@ -88,5 +94,8 @@ export const newTaskSchema = z.object({
 			(w) => w === NO_WATERMARK || w === CUSTOM_WATERMARK || WATERMARK_NAME.test(w),
 			'Elige una marca de agua'
 		),
-	removeAudio: z.boolean()
+	removeAudio: z.boolean(),
+	timestamp: z.boolean(),
+	/** Stored as the uploaded object's Content-Type. */
+	contentType: z.string().regex(/^[\w.+-]+\/[\w.+-]+$/, 'Tipo de vídeo no válido')
 });
