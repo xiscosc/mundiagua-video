@@ -21,8 +21,12 @@
 
 	let file = $state<File | null>(null);
 	let duration = $state<number>();
-	/** A still frame of the chosen video, for the watermark preview. */
-	let frame = $state('');
+	/** The chosen video, shown in the watermark preview. */
+	const videoUrl = $derived(file ? URL.createObjectURL(file) : '');
+	$effect(() => {
+		const url = videoUrl;
+		return () => URL.revokeObjectURL(url);
+	});
 	let label = $state('');
 	let chosenWatermark = $state('');
 	const watermark = $derived(chosenWatermark || watermarks[0]?.name || '');
@@ -56,33 +60,6 @@
 		}
 		file = f;
 		duration = undefined;
-		frame = '';
-		readVideo(f);
-	}
-
-	/** Reads the video's length (for "duración final") and grabs a frame (for the preview). */
-	function readVideo(f: File) {
-		const video = document.createElement('video');
-		const url = URL.createObjectURL(f);
-		video.muted = true;
-		video.preload = 'auto';
-		video.onloadedmetadata = () => {
-			if (file !== f || !Number.isFinite(video.duration)) return URL.revokeObjectURL(url);
-			duration = video.duration;
-			video.currentTime = Math.min(1, video.duration / 2);
-		};
-		video.onseeked = () => {
-			if (file === f && video.videoWidth) {
-				const canvas = document.createElement('canvas');
-				canvas.width = Math.min(1280, video.videoWidth);
-				canvas.height = Math.round((video.videoHeight * canvas.width) / video.videoWidth);
-				canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
-				frame = canvas.toDataURL('image/jpeg', 0.85);
-			}
-			URL.revokeObjectURL(url);
-		};
-		video.onerror = () => URL.revokeObjectURL(url);
-		video.src = url;
 	}
 
 	function pickWatermark(f: File | undefined) {
@@ -105,7 +82,6 @@
 	function clearFile() {
 		file = null;
 		duration = undefined;
-		frame = '';
 		if (fileInput) fileInput.value = '';
 	}
 
@@ -197,7 +173,8 @@
 	</header>
 
 	<form method="POST" action="?/create" use:enhance={submit} class="space-y-6 px-6 py-6">
-		<fieldset disabled={busy} class="space-y-6">
+		<!-- min-w-0: a fieldset otherwise grows to fit a long file name instead of truncating it. -->
+		<fieldset disabled={busy} class="min-w-0 space-y-6">
 			<!-- Video -->
 			<div>
 				<span class="mb-2 block text-sm font-medium">Vídeo</span>
@@ -209,9 +186,20 @@
 							role="img"
 							aria-label="Vista previa del vídeo con la marca de agua"
 						>
-							{#if frame}
-								<img src={frame} alt="" class="absolute inset-0 size-full object-contain" />
-							{/if}
+							<!-- The browser draws the frame itself: copying it to a canvas came out black for some videos (e.g. HEVC). -->
+							<video
+								src={videoUrl}
+								muted
+								playsinline
+								preload="auto"
+								class="absolute inset-0 size-full object-contain"
+								onloadedmetadata={(e) => {
+									const v = e.currentTarget;
+									if (!Number.isFinite(v.duration)) return;
+									duration = v.duration;
+									v.currentTime = Math.min(1, v.duration / 2);
+								}}
+							></video>
 							{#if watermarkUrl}
 								<img src={watermarkUrl} alt="" class="absolute inset-0 size-full" />
 							{/if}
@@ -401,7 +389,7 @@
 
 			<!-- Elapsed time -->
 			<label class="flex cursor-pointer items-center gap-2.5 text-sm font-medium">
-				<input type="checkbox" name="timestamp" class="size-4 rounded border-zinc-300 accent-indigo-600" />
+				<input type="checkbox" name="timestamp" class="size-4 rounded border-zinc-300 accent-zinc-900" />
 				Mostrar tiempo transcurrido
 			</label>
 		</fieldset>
