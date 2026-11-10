@@ -51,7 +51,7 @@ aws s3 cp --only-show-errors "s3://$UPLOAD_BUCKET/$KEY" in
 
 # pools=$(nproc): x265 can't detect CPUs via libnuma inside containers and silently drops its thread pool.
 ffmpeg -nostdin -hide_banner -loglevel warning -y -i in $wm_input -filter_complex "$graph" \
-  -map "[out]" $audio -c:v libx265 -x265-params "pools=$(nproc):log-level=error" -preset medium -crf 28 -tag:v hvc1 -pix_fmt yuv420p -movflags +faststart out.mp4
+  -map "[out]" $audio -c:v libx265 -x265-params "pools=$(nproc):log-level=error" -preset fast -crf 28 -tag:v hvc1 -pix_fmt yuv420p -movflags +faststart out.mp4
 
 aws s3 cp --only-show-errors out.mp4 "s3://$OUTPUT_BUCKET/$id.mp4"
 status done
