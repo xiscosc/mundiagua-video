@@ -3,6 +3,7 @@
 	import TaskList from '#lib/components/TaskList.svelte';
 	import { WATERMARKS } from '#lib/watermarks.ts';
 	import type { PageProps } from './$types';
+	import logo from '#lib/assets/logo.png';
 
 	let { data }: PageProps = $props();
 	let upload = $state<ActiveUpload | null>(null);
@@ -14,11 +15,9 @@
 
 <div class="min-h-dvh">
 	<header class="border-b border-zinc-200 bg-white">
-		<div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-4 sm:px-6">
-			<span class="grid size-9 place-items-center rounded-xl bg-indigo-600 shadow-sm">
-				<svg viewBox="0 0 24 24" class="size-4 fill-white" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
-			</span>
-			<h1 class="text-base font-semibold">Mundiagua Video Converter</h1>
+		<div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
+			<img src={logo} alt="Mundiagua" class="h-12 w-auto" />
+			<h1 class="border-l border-zinc-200 pl-3 text-base font-semibold">Video Converter</h1>
 		</div>
 	</header>
 
