@@ -21,7 +21,7 @@
 	}
 
 	const STATUS = {
-		uploading: { text: 'Subiendo', icon: CloudUpload, tone: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20' },
+		uploading: { text: 'Subiendo', icon: CloudUpload, tone: 'bg-zinc-900 text-white ring-zinc-900' },
 		created: { text: 'Pendiente de subida', icon: Clock, tone: 'bg-zinc-100 text-zinc-600 ring-zinc-500/20' },
 		queued: { text: 'Pendiente de procesar', icon: Clock, tone: 'bg-amber-50 text-amber-700 ring-amber-600/20' },
 		processing: { text: 'Procesando', icon: LoaderCircle, tone: 'bg-sky-50 text-sky-700 ring-sky-600/20' },
@@ -40,7 +40,7 @@
 			type="button"
 			onclick={reload}
 			disabled={reloading}
-			class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 focus-visible:ring-3 focus-visible:ring-indigo-500/30 focus-visible:outline-none disabled:opacity-60"
+			class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 focus-visible:ring-3 focus-visible:ring-zinc-900/25 focus-visible:outline-none disabled:opacity-60"
 		>
 			<RefreshCw class={['size-4', reloading && 'animate-spin']} aria-hidden="true" />
 			Actualizar
@@ -89,7 +89,7 @@
 						</p>
 						{#if uploading && upload}
 							<div class="mt-2 h-1.5 max-w-sm overflow-hidden rounded-full bg-zinc-100">
-								<div class="h-full rounded-full bg-indigo-600 transition-[width] duration-300" style:width="{(upload.loaded / upload.total) * 100}%"></div>
+								<div class="h-full rounded-full bg-zinc-900 transition-[width] duration-300" style:width="{(upload.loaded / upload.total) * 100}%"></div>
 							</div>
 						{/if}
 					</div>
@@ -98,7 +98,7 @@
 						<button
 							type="button"
 							onclick={() => play(task)}
-							class="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200 px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 focus-visible:ring-3 focus-visible:ring-indigo-500/40 focus-visible:outline-none"
+							class="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200 px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 focus-visible:ring-3 focus-visible:ring-zinc-900/25 focus-visible:outline-none"
 						>
 							<Play class="size-4" aria-hidden="true" />
 							Ver
@@ -107,7 +107,7 @@
 					{#if task.downloadUrl}
 						<a
 							href={task.downloadUrl}
-							class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-700 focus-visible:ring-3 focus-visible:ring-indigo-500/40 focus-visible:outline-none"
+							class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-700 focus-visible:ring-3 focus-visible:ring-zinc-900/25 focus-visible:outline-none"
 						>
 							<Download class="size-4" aria-hidden="true" />
 							Descargar

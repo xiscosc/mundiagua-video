@@ -238,8 +238,8 @@
 						class={[
 							'flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors',
 							dragging
-								? 'border-indigo-500 bg-indigo-50'
-								: 'border-zinc-300 hover:border-indigo-400 hover:bg-zinc-50'
+								? 'border-zinc-900 bg-zinc-100'
+								: 'border-zinc-300 hover:border-zinc-500 hover:bg-zinc-50'
 						]}
 						ondragover={(e) => {
 							e.preventDefault();
@@ -248,11 +248,11 @@
 						ondragleave={() => (dragging = false)}
 						ondrop={onDrop}
 					>
-						<span class="grid size-12 place-items-center rounded-full bg-indigo-50 text-indigo-600">
+						<span class="grid size-12 place-items-center rounded-full bg-zinc-100 text-zinc-900">
 							<CloudUpload class="size-6" aria-hidden="true" />
 						</span>
 						<span class="text-sm">
-							<span class="font-semibold text-indigo-600">Elige un vídeo</span> o arrástralo aquí
+							<span class="font-semibold text-zinc-900 underline underline-offset-2">Elige un vídeo</span> o arrástralo aquí
 						</span>
 						<span class="text-xs text-zinc-500">MP4, MOV, MKV, AVI, WebM…, hasta {MAX_SIZE / GB} GB</span>
 					</label>
@@ -277,7 +277,7 @@
 					bind:value={label}
 					maxlength="200"
 					placeholder="p. ej. MA-2026-0153"
-					class="block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-xs outline-none placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/20"
+					class="block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm shadow-xs outline-none placeholder:text-zinc-400 focus:border-zinc-900 focus:ring-3 focus:ring-zinc-900/10"
 				/>
 				<p class="mt-1.5 text-xs text-zinc-500">
 					Para identificar el vídeo en la lista. También es el nombre del archivo al descargarlo.
@@ -291,9 +291,9 @@
 						{#each [{ name: NO_WATERMARK, url: '' }, ...watermarks] as wm (wm.name)}
 							<label
 								class={[
-									'group relative cursor-pointer overflow-hidden rounded-xl border-2 transition has-focus-visible:ring-3 has-focus-visible:ring-indigo-500/30',
+									'group relative cursor-pointer overflow-hidden rounded-xl border-2 transition has-focus-visible:ring-3 has-focus-visible:ring-zinc-900/25',
 									watermark === wm.name
-										? 'border-indigo-500'
+										? 'border-zinc-900'
 										: 'border-zinc-200 hover:border-zinc-300'
 								]}
 							>
@@ -316,7 +316,7 @@
 									<span class="block text-[11px] leading-tight font-medium">{watermarkLabel(wm.name)}</span>
 								</div>
 								{#if watermark === wm.name}
-									<span class="absolute top-1 right-1 grid size-4 place-items-center rounded-full bg-indigo-600 text-white shadow">
+									<span class="absolute top-1 right-1 grid size-4 place-items-center rounded-full bg-zinc-900 text-white shadow">
 										<Check class="size-3" strokeWidth={3} aria-hidden="true" />
 									</span>
 								{/if}
@@ -324,8 +324,8 @@
 						{/each}
 						<label
 							class={[
-								'relative cursor-pointer overflow-hidden rounded-xl border-2 transition has-focus-visible:ring-3 has-focus-visible:ring-indigo-500/30',
-								watermark === CUSTOM_WATERMARK ? 'border-indigo-500' : 'border-dashed border-zinc-300 hover:border-zinc-400'
+								'relative cursor-pointer overflow-hidden rounded-xl border-2 transition has-focus-visible:ring-3 has-focus-visible:ring-zinc-900/25',
+								watermark === CUSTOM_WATERMARK ? 'border-zinc-900' : 'border-dashed border-zinc-300 hover:border-zinc-400'
 							]}
 						>
 							<input
@@ -345,7 +345,7 @@
 								<span class="block text-[11px] leading-tight font-medium">{customWatermark ? 'Personalizada' : 'Subir PNG'}</span>
 							</div>
 							{#if watermark === CUSTOM_WATERMARK}
-								<span class="absolute top-1 right-1 grid size-4 place-items-center rounded-full bg-indigo-600 text-white shadow">
+								<span class="absolute top-1 right-1 grid size-4 place-items-center rounded-full bg-zinc-900 text-white shadow">
 									<Check class="size-3" strokeWidth={3} aria-hidden="true" />
 								</span>
 							{/if}
@@ -365,9 +365,9 @@
 					{#each SPEEDS as s (s)}
 						<label
 							class={[
-								'cursor-pointer rounded-lg py-2 text-center text-sm font-medium transition has-focus-visible:ring-3 has-focus-visible:ring-indigo-500/30',
+								'cursor-pointer rounded-lg py-2 text-center text-sm font-medium transition has-focus-visible:ring-3 has-focus-visible:ring-zinc-900/25',
 								speed === s
-									? 'bg-white text-indigo-700 shadow-sm'
+									? 'bg-zinc-900 text-white shadow-sm'
 									: 'text-zinc-600 hover:text-zinc-900'
 							]}
 						>
@@ -392,7 +392,7 @@
 					type="checkbox"
 					name="removeAudio"
 					checked
-					class="size-4 rounded border-zinc-300 accent-indigo-600"
+					class="size-4 rounded border-zinc-300 accent-zinc-900"
 				/>
 				Eliminar audio
 			</label>
@@ -413,7 +413,7 @@
 
 		{#if upload}
 			{@const pct = Math.floor((upload.loaded / upload.total) * 100)}
-			<div class="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4" role="status">
+			<div class="rounded-xl border border-zinc-200 bg-zinc-100/60 p-4" role="status">
 				<div class="flex items-center justify-between text-sm">
 					<span class="font-medium">Subiendo… {pct}%</span>
 					<button
@@ -424,8 +424,8 @@
 						Cancelar
 					</button>
 				</div>
-				<div class="mt-3 h-2 overflow-hidden rounded-full bg-indigo-100">
-					<div class="h-full rounded-full bg-indigo-600 transition-[width] duration-300" style:width="{pct}%"></div>
+				<div class="mt-3 h-2 overflow-hidden rounded-full bg-zinc-200">
+					<div class="h-full rounded-full bg-zinc-900 transition-[width] duration-300" style:width="{pct}%"></div>
 				</div>
 				<p class="mt-2 text-xs text-zinc-600">
 					{formatBytes(upload.loaded)} de {formatBytes(upload.total)}
@@ -439,7 +439,7 @@
 			<button
 				type="submit"
 				disabled={busy}
-				class="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:ring-3 focus-visible:ring-indigo-500/40 focus-visible:outline-none disabled:opacity-60"
+				class="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-700 focus-visible:ring-3 focus-visible:ring-zinc-900/25 focus-visible:outline-none disabled:opacity-60"
 			>
 				<CloudUpload class="size-4" aria-hidden="true" />
 				{creating ? 'Preparando…' : 'Subir y procesar'}
