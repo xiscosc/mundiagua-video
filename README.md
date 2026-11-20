@@ -8,7 +8,7 @@ Web app to upload a video, apply a watermark and speed it up. Output: 1280×720,
 |---|---|
 | `web/` | SvelteKit app on Cloudflare Workers |
 | `container/` | ffmpeg job, runs on AWS Fargate |
-| `infra/` | Terraform for the AWS resources and the Cloudflare Worker |
+| `infra/` | OpenTofu for the AWS resources and the Cloudflare Worker |
 
 ## How it works
 
@@ -39,7 +39,7 @@ Watermarks are included in both the web app and the container image. After chang
 ## Deployment
 
 - **Web app:** deployed by Cloudflare's GitHub integration (Workers Builds) on every push to the selected branch.
-- **AWS:** deployed by `.github/workflows/deploy.yml`, run manually from the Actions tab. It runs `terraform apply` in `infra/`, then builds the container image and pushes it to ECR.
+- **AWS:** deployed by `.github/workflows/deploy.yml`, run manually from the Actions tab. It runs `tofu apply` in `infra/`, then builds the container image and pushes it to ECR.
 
 ### One-time setup
 
@@ -53,7 +53,7 @@ Watermarks are included in both the web app and the container image. After chang
 
    Note the Worker URL; it's the `WEB_ORIGIN` below.
 
-2. Create an S3 bucket for the Terraform state:
+2. Create an S3 bucket for the OpenTofu state:
 
    ```bash
    aws s3 mb s3://<state bucket> --region <region>

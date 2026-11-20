@@ -1,6 +1,6 @@
 terraform {
   # State lives in S3 so CI can apply. Bucket and region are passed at init:
-  #   terraform init -backend-config="bucket=<state bucket>" -backend-config="region=<region>"
+  #   tofu init -backend-config="bucket=<state bucket>" -backend-config="region=<region>"
   backend "s3" {
     key          = "video-converter.tfstate"
     use_lockfile = true
